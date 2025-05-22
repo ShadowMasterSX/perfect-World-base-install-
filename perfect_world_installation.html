@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect World Server Installation Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; line-height: 1.6; }
+        h1, h2, h3 { color: #2c3e50; }
+        code, pre { background: #f4f4f4; padding: 0.5rem; display: block; margin: 1rem 0; border-left: 3px solid #3498db; }
+        ul { margin-left: 2rem; }
+        hr { margin: 2rem 0; }
+    </style>
+</head>
+<body>
+    <h1>Perfect World Server Installation Guide (v1.1.x - 1.7.8)</h1>
+    <p><em>Note: Version 1.8.0 is not supported.</em></p>
+
+    <h2>Supported Operating Systems</h2>
+    <ul>
+        <li>Debian 12 (64-bit)</li>
+        <li>Ubuntu 25 (64-bit)</li>
+    </ul>
+
+    <hr>
+
+    <h2>Base System Installation</h2>
+    <pre><code>dpkg --add-architecture i386
+apt update && apt upgrade -y
+apt install -y default-jdk apache2 mariadb-server phpmyadmin php-mbstring php-zip php-gd php-json php-curl
+apt install -y libstdc++6:i386 libxml2:i386</code></pre>
+
+    <hr>
+
+    <h2>Database Server Setup</h2>
+    <pre><code>apt install -y libstdc++6:i386 libxml2:i386</code></pre>
+
+    <hr>
+
+    <h2>Perfect World Server Setup</h2>
+    <ol>
+        <li><strong>Download the required server files</strong> and place them in your <code>/home</code> directory.</li>
+        <li><strong>Edit the following file:</strong><br><code>/home/auth/table.xml</code></li>
+        <li><strong>Copy shared object (.so) files:</strong><br><code>cp /home/gamed/*.so /usr/lib/</code></li>
+        <li><strong>Edit your hosts file:</strong><br><code>nano /etc/hosts</code><br>Add the required entries (to be provided).</li>
+        <li><strong>Set permissions for the home directory:</strong><br><code>chmod -R 777 /home/*</code></li>
+        <li><strong>Copy game configuration files to <code>/home/gamed/config/</code>:</strong>
+            <ul>
+                <li><code>task.data</code></li>
+                <li><code>elements.data</code></li>
+                <li><code>gshopserv.data</code></li>
+                <li>Other version-specific <code>gshopserv.data</code> files as needed</li>
+            </ul>
+        </li>
+    </ol>
+
+    <hr>
+
+    <h2>Final Steps</h2>
+
+    <h3>Reboot the Server</h3>
+    <pre><code>init 6</code></pre>
+
+    <h3>Start the Server (Minimal)</h3>
+    <pre><code>/home/start.sh</code></pre>
+
+    <h3>Start the Server (All Maps)</h3>
+    <pre><code>/home/start_max.sh</code></pre>
+
+    <h3>Stop the Server</h3>
+    <pre><code>/home/stop.sh</code></pre>
+</body>
+</html>
