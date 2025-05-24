@@ -9,7 +9,7 @@
 ---
 
 ## Base System Installation
-
+*Note: dont use the simple installer at the moment it ill not work (WIP)
 ```sh
 dpkg --add-architecture i386
 ```
