@@ -12,12 +12,16 @@
 
 ```sh
 dpkg --add-architecture i386
+```
+```sh 
 apt update && apt upgrade -y
-apt install -y default-jdk apache2 mariadb-server phpmyadmin php-mbstring php-zip php-gd php-json php-curl
+```
+```sh
+apt install -y default-jdk apache2 mariadb-server php-mbstring php-zip php-gd php-json php-curl
+```
+```sh
 apt install -y libstdc++6:i386 libxml2:i386
 ```
-
----
 
 ## Database Server Setup
 
