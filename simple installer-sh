@@ -1,0 +1,150 @@
+#!/bin/bash
+
+# Function to show an error message and exit
+display_error() {
+    yad --title="Error" --text="$1" --button=OK:1 --width=400 --height=200
+    exit 1
+}
+
+# Function to display a confirmation dialog
+confirm_action() {
+    yad --title="Confirmation" --text="$1" --button=No:1 --button=Yes:0 --width=400 --height=200
+}
+
+# Check if yad is installed
+if ! command -v yad &> /dev/null; then
+    echo "yad is not installed. Please install it using 'apt install yad'."
+    exit 1
+fi
+
+# Check OS compatibility
+os_info=$(lsb_release -d 2>/dev/null | awk -F":" '{print $2}')
+os_supported=false
+
+case "$os_info" in
+    *Debian*10*|*Debian*11*|*Debian*12*|*Debian*13*|*Ubuntu*20.04*|*Ubuntu*22.04*|*Ubuntu*24.04*)
+        os_supported=true
+        ;;
+esac
+
+if [ "$os_supported" = false ]; then
+    display_error "Es tut mir leid, aber Ihr Betriebssystem ist nicht kompatibel. Kompatibel sind Debian 10, 11, 12, 13 und Ubuntu 20.04, 22.04, 24.04. Bitte verwenden Sie eines der genannten Betriebssysteme. Freundlichst, Sranus."
+fi
+
+# Update and install required packages
+yad --title="System Update" --text="System wird aktualisiert und benötigte Programme werden installiert..." --no-buttons --width=400 --height=200 --timeout=5
+echo "Updating system..."
+
+sudo dpkg --add-architecture i386
+sudo apt update && sudo apt upgrade -y
+
+packages=(
+    "mc" "screen" "htop" "default-jdk" "mono-complete" "exim4" "p7zip-full" 
+    "libpcap-dev" "curl" "wget" "ipset" "net-tools" "tzdata" "ntpdate"
+    "mariadb-server" "mariadb-client" "make" "gcc" "g++" "libssl-dev:i386" "libssl-dev"
+    "libcrypto++-dev" "libpcre3" "libpcre3-dev" "libpcre3:i386" "libpcre3-dev:i386"
+    "libtesseract-dev" "libx11-dev:i386" "libx11-dev" "gcc-multilib" "libc6-dev:i386"
+    "build-essential" "g++-multilib" "libtemplate-plugin-xml-perl" "libxml2-dev" 
+    "libxml2-dev:i386" "libxml2:i386" "libstdc++6:i386" "libmariadb-dev-compat"
+    "libmariadb-dev" "libdb++-dev" "libdb-dev" "libdb5.3" "libdb5.3++" 
+    "libdb5.3++-dev" "libdb5.3-dbg" "libdb5.3-dev" "php" "libapache2-mod-php"
+    "php-cli" "php-fpm" "php-json" "php-pdo" "php-zip" "php-gd" "php-mbstring" 
+    "php-curl" "php-xml" "php-pear" "php-bcmath" "php-cgi" "php-mysqli" 
+    "php-common" "php-phpseclib" "php-mysql"
+)
+
+for pkg in "${packages[@]}"; do
+    sudo apt -y install "$pkg"
+done
+
+# Create MariaDB user and database
+user_creds=$(yad --title="MariaDB User Setup" --form --field="User:" --field="Password:H" --field="Confirm Password:H" --width=400 --height=200)
+
+maria_user=$(echo "$user_creds" | cut -d '|' -f 1)
+maria_pass=$(echo "$user_creds" | cut -d '|' -f 2)
+maria_pass_confirm=$(echo "$user_creds" | cut -d '|' -f 3)
+
+if [ "$maria_pass" != "$maria_pass_confirm" ]; then
+    display_error "Passwords do not match. Please try again."
+fi
+
+sudo mysql -u root -e "CREATE USER '$maria_user'@'localhost' IDENTIFIED BY '$maria_pass';"
+sudo mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO '$maria_user'@'localhost' WITH GRANT OPTION;"
+sudo mysql -u root -e "FLUSH PRIVILEGES;"
+
+# Game server menu
+menu_choice=$(yad --list --title="Game Server Installation" --column="Option" --column="Version" \
+    1 "Perfect World 1.4.1" 2 "Perfect World 1.4.2" 3 "Perfect World 1.4.3" \
+    4 "Perfect World 1.4.6" 5 "Perfect World 1.5.1" 6 "Perfect World 1.5.5" \
+    7 "Perfect World 1.6.2" 8 "Perfect World 1.7.8" --width=600 --height=400)
+
+if [ -z "$menu_choice" ]; then
+    display_error "No option selected. Exiting."
+fi
+
+# Download and install game server
+server_urls=(
+    [1]="https://zetgaming.de/PW-Server/pw-server-1.4.1.7z"
+    [2]="https://zetgaming.de/PW-Server/pw-server-1.4.2.7z"
+    [3]="https://zetgaming.de/PW-Server/pw-server-1.4.3.7z"
+    [4]="https://zetgaming.de/PW-Server/pw-server-1.4.6.7z"
+    [5]="https://zetgaming.de/PW-Server/pw-server-1.5.1.7z"
+    [6]="https://zetgaming.de/PW-Server/pw-server-1.5.5.7z"
+    [7]="https://zetgaming.de/PW-Server/pw-server-1.6.2.7z"
+    [8]="https://zetgaming.de/PW-Server/pw-server-1.7.8.7z"
+)
+
+temp_dir="/pwtmp"
+install_dir="/opt/game_server"
+
+mkdir -p "$temp_dir" && cd "$temp_dir"
+
+server_url=${server_urls[$menu_choice]}
+
+if confirm_action "Do you want to download and install the server from $server_url?"; then
+    wget "$server_url" -O server.7z
+    7z x server.7z -o"$install_dir"
+fi
+
+# Update /etc/hosts
+sudo bash -c 'cat << EOF >> /etc/hosts
+127.0.0.1 gm_server
+127.0.0.1 PW-Server
+127.0.0.1 aumanager
+127.0.0.1 manager
+127.0.0.1 link1
+127.0.0.1 link2
+127.0.0.1 link3
+127.0.0.1 link4
+127.0.0.1 game1
+127.0.0.1 game2
+127.0.0.1 delivery
+127.0.0.1 database
+127.0.0.1 backup
+127.0.0.1 auth
+127.0.0.1 audb
+127.0.0.1 gmserver
+127.0.0.1 LogServer
+127.0.0.1 AUDATA
+EOF'
+
+# Download and setup additional files
+wget https://zetgaming.de/PW-Server/usr/multilib.7z -O multilib.7z
+7z x multilib.7z
+sudo cp -rf multilib/* /usr/lib
+
+wget https://zetgaming.de/PW-Server/etc/alletc.7z -O alletc.7z
+7z x alletc.7z
+sudo cp -rf alletc/* /etc/
+
+# Setup database
+wget https://zetgaming.de/PW-Server/sql/npw.sql -O npw.sql
+mysql -u "$maria_user" -p"$maria_pass" < npw.sql
+
+# phpMyAdmin setup
+if confirm_action "Das Benutzen von PhpMyAdmin ist unsicher. Möchten Sie es dennoch installieren?"; then
+    sudo apt install phpmyadmin -y
+fi
+
+# Final message
+yad --title="Setup Complete" --text="Vielen Dank für die Benutzung meines Scriptes. Besuchen Sie mich auf meiner Homepage https://zetgaming.de/ Freundliche Grüße, Sranus. PW Development: https://pw-developers.net" --button=OK:0 --width=400 --height=200
