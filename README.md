@@ -43,10 +43,29 @@ mysql_secure_installation
    ```
 
 4. **Edit your hosts file:**
-   ```sh
-   nano /etc/hosts
-   ```
-   Add the required entries (to be provided).
+  
+  ```sh
+sudo bash -c 'cat << EOF >> /etc/hosts
+127.0.0.1 gm_server
+127.0.0.1 PW-Server
+127.0.0.1 aumanager
+127.0.0.1 manager
+127.0.0.1 link1
+127.0.0.1 link2
+127.0.0.1 link3
+127.0.0.1 link4
+127.0.0.1 game1
+127.0.0.1 game2
+127.0.0.1 delivery
+127.0.0.1 database
+127.0.0.1 backup
+127.0.0.1 auth
+127.0.0.1 audb
+127.0.0.1 gmserver
+127.0.0.1 LogServer
+127.0.0.1 AUDATA
+EOF'
+```
 
 5. **Set permissions for the home directory:**
    ```sh
